@@ -18,9 +18,22 @@ if test -n "$CODE"; then
 	KEYWORD="Serviceantwort"
 fi
 
-SUMMARY=$(gammu -c ~/.gammurc-ussd-100 getussd "$QUERY"| grep "$KEYWORD" | cut -f2 -d '"')
+tmp=$(mktemp)
+gammu -c ~/.gammurc getussd "$QUERY" >$tmp 2>/dev/null &
 
-# notify-send -t 10 "$SUMMARY"
+while true; do
+        x=$(cat $tmp|wc -l)
+        if test "$x" -gt 0; then
+                break
+        fi
+        sleep 1
+done
+
+SUMMARY=$(cat $tmp | grep "$KEYWORD" | cut -f2 -d '"')
+
+kill -3 $(jobs -p)
+
+rm $tmp
 
 if test -z "$SUMMARY"; then
 	SUMMARY="Ein unerwarteter Fehler trat auf (Ergebnis war leer)."
